@@ -1,0 +1,6 @@
+fastapi
+pydantic
+uvicorn
+python-multipart
+fastapi-pagination
+sqlalchemy-json

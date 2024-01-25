@@ -1,0 +1,21 @@
+# Ignore all git-related files and directories
+.git
+.gitignore
+
+# Ignore Python bytecode and cache files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore development files and directories
+*.egg-info
+dist
+build
+.tox
+.coverage
+htmlcov
+.venv
+
+# Include GitHub configuration files
+.github/*
