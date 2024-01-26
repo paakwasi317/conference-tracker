@@ -95,10 +95,8 @@ class Scheduler:
         schedule = {self.LUNCH_START_TIME: TalkInfo(self.LUNCH, self.LUNCH_END_TIME - self.LUNCH_START_TIME)}
         return schedule
     
-    def _create_networking_schedule(self, afternoon_section: SCHEDULE_TYPE) -> SCHEDULE_TYPE:
-        if not afternoon_section:
-            return {}
-        last_key, last_value = max(afternoon_section.items())
+    def _create_networking_schedule(self, current_section: SCHEDULE_TYPE) -> SCHEDULE_TYPE:
+        last_key, last_value = max(current_section.items())
         networking_start_time = max(last_key + last_value.duration, 16 * 60)
         schedule = {networking_start_time: TalkInfo(self.NETWORK_EVENT, 0)}
         return schedule
