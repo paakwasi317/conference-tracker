@@ -62,7 +62,7 @@ class Scheduler:
         tracks = {f"Track {counter}": sessions}
         return tracks
     
-    def _create_schedule(self, start_time: int, end_time: int) -> SCHEDULE_TYPE:
+    def _create_session(self, start_time: int, end_time: int) -> SCHEDULE_TYPE:
         schedule = {}
         current_time = start_time
         used_talks = set()
@@ -85,21 +85,21 @@ class Scheduler:
 
         return schedule
     
-    def _create_morning_schedule(self) -> SCHEDULE_TYPE:
-        return self._create_schedule(self.MORNING_START_TIME, self.MORNING_END_TIME)
+    def _create_morning_session(self) -> SCHEDULE_TYPE:
+        return self._create_session(self.MORNING_START_TIME, self.MORNING_END_TIME)
     
-    def _create_afternoon_schedule(self) -> SCHEDULE_TYPE:
-        return self._create_schedule(self.AFTERNOON_START_TIME, self.AFTERNOON_END_TIME)
+    def _create_afternoon_session(self) -> SCHEDULE_TYPE:
+        return self._create_session(self.AFTERNOON_START_TIME, self.AFTERNOON_END_TIME)
     
-    def _create_lunch_schedule(self) -> SCHEDULE_TYPE:
+    def _create_lunch_session(self) -> SCHEDULE_TYPE:
         schedule = {self.LUNCH_START_TIME: TalkInfo(self.LUNCH, self.LUNCH_END_TIME - self.LUNCH_START_TIME)}
         return schedule
     
-    def _create_networking_schedule(self, current_schedule: SCHEDULE_TYPE) -> SCHEDULE_TYPE:
+    def _create_networking_session(self, current_schedule: SCHEDULE_TYPE) -> SCHEDULE_TYPE:
         last_key, last_value = max(current_schedule.items())
         networking_start_time = max(last_key + last_value.duration, 16 * 60)
-        schedule = {networking_start_time: TalkInfo(self.NETWORK_EVENT, 0)}
-        return schedule
+        section = {networking_start_time: TalkInfo(self.NETWORK_EVENT, 0)}
+        return section
 
     def clean_data(self, file_byte: IO[bytes]):
         try:
@@ -119,12 +119,12 @@ class Scheduler:
         all_schedules = []
         counter = 1
         while self.conference_data:
-            morning_section = self._create_morning_schedule()
-            lunch_section = self._create_lunch_schedule()
-            afternoon_section = self._create_afternoon_schedule()
-            current_schedule = {**morning_section, **lunch_section, **afternoon_section}
-            networking_section = self._create_networking_schedule(current_schedule)
-            current_schedule.update(networking_section)
+            morning_session = self._create_morning_session()
+            lunch_session = self._create_lunch_session()
+            afternoon_session = self._create_afternoon_session()
+            current_schedule = {**morning_session, **lunch_session, **afternoon_session}
+            networking_session = self._create_networking_session(current_schedule)
+            current_schedule.update(networking_session)
             tracks = self._format_track_output(counter, current_schedule)
             all_schedules.append(tracks)
             counter+=1
