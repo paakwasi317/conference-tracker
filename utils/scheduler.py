@@ -98,8 +98,8 @@ class Scheduler:
     def _create_networking_session(self, current_schedule: SCHEDULE_TYPE) -> SCHEDULE_TYPE:
         last_key, last_value = max(current_schedule.items())
         networking_start_time = max(last_key + last_value.duration, 16 * 60)
-        section = {networking_start_time: TalkInfo(self.NETWORK_EVENT, 0)}
-        return section
+        session = {networking_start_time: TalkInfo(self.NETWORK_EVENT, 0)}
+        return session
 
     def clean_data(self, file_byte: IO[bytes]):
         try:
