@@ -1,13 +1,26 @@
 from collections import namedtuple
+from datetime import datetime, time
 import pandas as pd
 import random
 import re
 from typing import Dict, List, IO
 
+from .logger import logger
+
 TalkInfo = namedtuple("TalkInfo", ["conference_talk", "duration"])
 
 SCHEDULE_TYPE = Dict[int, TalkInfo]
 MULTIPLE_SCHEDULE_TYPE = List[Dict[int, TalkInfo]]
+
+class SchedulingError(Exception):
+  """Base class for exceptions in scheduling"""
+
+  def __init__(self, message):
+    self.message = message
+
+  def __str__(self):
+    return f'Scheduling Error: {self.message}'
+  
 
 class Scheduler:
 
@@ -19,11 +32,11 @@ class Scheduler:
     AFTERNOON_END_TIME = 17 * 60 
 
     LUNCH = 'Lunch'
-    NETWORK_EVENT = 'networking_event'
+    NETWORK_EVENT = 'Networking event'
 
     
     def __init__(self) -> None:
-        self.conference_data = []
+        self.conference_data = {}
 
     @staticmethod
     def _extract_talk_duration(row):
@@ -42,8 +55,10 @@ class Scheduler:
     def _format_track_output(counter: int, schedules: SCHEDULE_TYPE) -> Dict[str, list]:
         sessions = []
         for time, talk_info in schedules.items():
-            duration_mins = f"{talk_info.duration} mins" if talk_info.duration else ""
-            sessions.append(dict(time=f"{time // 60:02d}:{time % 60:02d}", talk=f"{talk_info.conference_talk} {duration_mins}"))
+            hours, minutes = divmod(time, 60)
+            dt_time = datetime(2024, 1, 2, hours, minutes)
+            duration_mins = f"[{talk_info.duration} mins]" if talk_info.duration else ""
+            sessions.append(dict(time=f"{dt_time.strftime('%I:%M %p')}", talk=f"{talk_info.conference_talk} {duration_mins}"))
         tracks = {f"Track {counter}": sessions}
         return tracks
     
@@ -52,7 +67,6 @@ class Scheduler:
         current_time = start_time
         used_talks = set()
         while current_time < end_time:
-    
             available_talks = [
                 talk_id
                 for talk_id, talk_info in self.conference_data.items()
@@ -61,7 +75,7 @@ class Scheduler:
 
             if not available_talks:
                 break
-
+            
             selected_talk_id = random.choice(available_talks)
             selected_talk_info = self.conference_data[selected_talk_id]
             schedule[current_time] = TalkInfo(selected_talk_info["conference_talk"], selected_talk_info["duration"])
@@ -82,13 +96,23 @@ class Scheduler:
         return schedule
     
     def _create_networking_schedule(self, afternoon_section: SCHEDULE_TYPE) -> SCHEDULE_TYPE:
+        if not afternoon_section:
+            return {}
         last_key, last_value = max(afternoon_section.items())
         networking_start_time = max(last_key + last_value.duration, 16 * 60)
         schedule = {networking_start_time: TalkInfo(self.NETWORK_EVENT, 0)}
         return schedule
 
     def clean_data(self, file_byte: IO[bytes]):
-        df = pd.read_csv(file_byte, header=None, names=['talk'])
+        try:
+            df = pd.read_csv(file_byte, header=None, names=['talk'])
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
+            raise SchedulingError(f"Invalid CSV file. Please upload a valid one or Contact support.")
+        
+        if df.empty:
+            raise SchedulingError("Empty CSV file. Please upload a valid one.")
+        
         df['talk_dict'] = df['talk'].apply(self._extract_talk_duration)
         result_dict = df['talk_dict'].to_dict()
         self.conference_data = result_dict
@@ -100,8 +124,9 @@ class Scheduler:
             morning_section = self._create_morning_schedule()
             lunch_section = self._create_lunch_schedule()
             afternoon_section = self._create_afternoon_schedule()
-            networking_section = self._create_networking_schedule(afternoon_section)
-            current_schedule = {**morning_section, **lunch_section, **afternoon_section, **networking_section}
+            current_schedule = {**morning_section, **lunch_section, **afternoon_section}
+            networking_schedule = self._create_networking_schedule(current_schedule)
+            current_schedule.update(networking_schedule)
             tracks = self._format_track_output(counter, current_schedule)
             all_schedules.append(tracks)
             counter+=1

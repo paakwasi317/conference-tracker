@@ -9,3 +9,7 @@ services:
       - 8000:8000
     volumes:
       - .:/app
+      - logs:/logs
+
+volumes:
+  logs:

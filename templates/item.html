@@ -6,24 +6,27 @@
     <title>Conference Track Management</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: sans-serif;
             background-color: #f4f4f4;
-            text-align: center;
             margin: 0;
             padding: 0;
+            color: #333;
         }
 
         h1 {
+            text-align: center;
+            margin-top: 40px;
             color: #333;
         }
 
         form {
-            max-width: 400px;
+            max-width: 500px;
             margin: 20px auto;
-            background-color: #fff;
+            background: #fff;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
         }
 
         label {
@@ -43,26 +46,62 @@
         }
 
         button {
-            background-color: #4caf50;
+            background: #4caf50;
             color: #fff;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            font-size: 16px;
         }
 
         button:hover {
-            background-color: #45a049;
+            background: #45a049;
         }
 
         #response {
             display: none;
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #e0e0e0;
-            border-radius: 4px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
             text-align: left;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+    
+        .track {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    
+    
+        .talk {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    
+
+    
+        h2 {
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+    
+        p {
+            margin: 0;
+            color: #555;
         }
     </style>
 </head>
@@ -77,38 +116,38 @@
     <div id="response"></div>
 
     <script>
-        // Sample script to handle the response (replace with your actual handling logic)
         document.querySelector('form').addEventListener('submit', async function(event) {
             event.preventDefault();
     
             const formData = new FormData(this);
+            var responseDiv = document.getElementById('response')
     
             try {
                 const response = await fetch(this.action, {
                     method: this.method,
                     body: formData,
                 });
-    
+
+                
                 const responseData = await response.json();
+                if (!response.ok) {
+                    alert(`${responseData.detail}`)
+                    return
+                }
     
-                // Display the response in the #response div
-                var responseDiv = document.getElementById('response')
                 responseDiv.style.display = 'block';
-    
-                // Clear previous content in the responseDiv
+
                 responseDiv.innerHTML = '';
     
-                // Iterate over each track in the schedules
                 responseData.schedules.forEach((track, trackIndex) => {
                     const trackDiv = document.createElement('div');
                     trackDiv.classList.add('track');
                     trackDiv.innerHTML = `<h2>Track ${trackIndex + 1}</h2>`;
-    
-                    // Iterate over each talk in the track
+
                     track[`Track ${trackIndex + 1}`].forEach((talk) => {
                         const talkDiv = document.createElement('div');
                         talkDiv.classList.add('talk');
-                        talkDiv.innerHTML = `<p>${talk.time} ${talk.talk}</p>`;
+                        talkDiv.innerHTML = `<p><b>${talk.time}</b> ${talk.talk}</p>`;
                         trackDiv.appendChild(talkDiv);
                     });
     
@@ -116,7 +155,8 @@
                 });
     
             } catch (error) {
-                console.error('Error:', error);
+                responseDiv.style.display = null;
+                console.error(error)
             }
         });
     </script>

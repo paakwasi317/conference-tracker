@@ -6,3 +6,4 @@ fastapi-pagination
 jinja2
 sqlalchemy-json
 pandas
+loguru
