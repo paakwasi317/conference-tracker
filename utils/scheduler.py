@@ -2,7 +2,7 @@ from collections import namedtuple
 import pandas as pd
 import random
 import re
-from typing import Dict, List
+from typing import Dict, List, IO
 
 TalkInfo = namedtuple("TalkInfo", ["conference_talk", "duration"])
 
@@ -38,6 +38,15 @@ class Scheduler:
             return dict(conference_talk=talk, duration= duration)
         return dict(conference_talk=row, duration=0)
 
+    @staticmethod
+    def _format_track_output(counter: int, schedules: SCHEDULE_TYPE) -> Dict[str, list]:
+        sessions = []
+        for time, talk_info in schedules.items():
+            duration_mins = f"{talk_info.duration} mins" if talk_info.duration else ""
+            sessions.append(dict(time=f"{time // 60:02d}:{time % 60:02d}", talk=f"{talk_info.conference_talk} {duration_mins}"))
+        tracks = {f"Track {counter}": sessions}
+        return tracks
+    
     def _create_schedule(self, start_time: int, end_time: int) -> SCHEDULE_TYPE:
         schedule = {}
         current_time = start_time
@@ -78,34 +87,22 @@ class Scheduler:
         schedule = {networking_start_time: TalkInfo(self.NETWORK_EVENT, 0)}
         return schedule
 
-    def clean_data(self):
-        df = pd.read_csv('activities.csv', header=None, names=['talk'])
+    def clean_data(self, file_byte: IO[bytes]):
+        df = pd.read_csv(file_byte, header=None, names=['talk'])
         df['talk_dict'] = df['talk'].apply(self._extract_talk_duration)
         result_dict = df['talk_dict'].to_dict()
         self.conference_data = result_dict
 
     def create_multiple_schedules(self) -> MULTIPLE_SCHEDULE_TYPE:
         all_schedules = []
+        counter = 1
         while self.conference_data:
             morning_section = self._create_morning_schedule()
             lunch_section = self._create_lunch_schedule()
             afternoon_section = self._create_afternoon_schedule()
             networking_section = self._create_networking_schedule(afternoon_section)
             current_schedule = {**morning_section, **lunch_section, **afternoon_section, **networking_section}
-            all_schedules.append(current_schedule)
+            tracks = self._format_track_output(counter, current_schedule)
+            all_schedules.append(tracks)
+            counter+=1
         return all_schedules
-
-
-if __name__ == '__main__':
-    scheduler = Scheduler()
-    scheduler.clean_data()
-    all_schedules_result = scheduler.create_multiple_schedules()
-    print(all_schedules_result)
-
-    for idx, schedule_result in enumerate(all_schedules_result):
-        print(f"Track {idx + 1}:")
-        for time, talk_info in schedule_result.items():
-            end_time = time + talk_info.duration
-            print(f"{time // 60:02d}:{time % 60:02d} {talk_info.conference_talk} {talk_info.duration} mins")
-
-        print()

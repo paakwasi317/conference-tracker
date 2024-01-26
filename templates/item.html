@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conference Track Management</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #response {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Conference Track Management</h1>
+    <form action="/tracker/uploadfile"  method="post" enctype="multipart/form-data">
+        <label for="file">Choose a csv file:</label>
+        <input type="file" id="file" name="file" accept=".csv" required>
+        <br>
+        <button type="submit">Upload</button>
+    </form>
+    <div id="response"></div>
+
+    <script>
+        // Sample script to handle the response (replace with your actual handling logic)
+        document.querySelector('form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+    
+            const formData = new FormData(this);
+    
+            try {
+                const response = await fetch(this.action, {
+                    method: this.method,
+                    body: formData,
+                });
+    
+                const responseData = await response.json();
+    
+                // Display the response in the #response div
+                var responseDiv = document.getElementById('response')
+                responseDiv.style.display = 'block';
+    
+                // Clear previous content in the responseDiv
+                responseDiv.innerHTML = '';
+    
+                // Iterate over each track in the schedules
+                responseData.schedules.forEach((track, trackIndex) => {
+                    const trackDiv = document.createElement('div');
+                    trackDiv.classList.add('track');
+                    trackDiv.innerHTML = `<h2>Track ${trackIndex + 1}</h2>`;
+    
+                    // Iterate over each talk in the track
+                    track[`Track ${trackIndex + 1}`].forEach((talk) => {
+                        const talkDiv = document.createElement('div');
+                        talkDiv.classList.add('talk');
+                        talkDiv.innerHTML = `<p>${talk.time} ${talk.talk}</p>`;
+                        trackDiv.appendChild(talkDiv);
+                    });
+    
+                    responseDiv.appendChild(trackDiv);
+                });
+    
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
