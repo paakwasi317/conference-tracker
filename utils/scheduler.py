@@ -95,8 +95,8 @@ class Scheduler:
         schedule = {self.LUNCH_START_TIME: TalkInfo(self.LUNCH, self.LUNCH_END_TIME - self.LUNCH_START_TIME)}
         return schedule
     
-    def _create_networking_schedule(self, current_section: SCHEDULE_TYPE) -> SCHEDULE_TYPE:
-        last_key, last_value = max(current_section.items())
+    def _create_networking_schedule(self, current_schedule: SCHEDULE_TYPE) -> SCHEDULE_TYPE:
+        last_key, last_value = max(current_schedule.items())
         networking_start_time = max(last_key + last_value.duration, 16 * 60)
         schedule = {networking_start_time: TalkInfo(self.NETWORK_EVENT, 0)}
         return schedule
@@ -123,8 +123,8 @@ class Scheduler:
             lunch_section = self._create_lunch_schedule()
             afternoon_section = self._create_afternoon_schedule()
             current_schedule = {**morning_section, **lunch_section, **afternoon_section}
-            networking_schedule = self._create_networking_schedule(current_schedule)
-            current_schedule.update(networking_schedule)
+            networking_section = self._create_networking_schedule(current_schedule)
+            current_schedule.update(networking_section)
             tracks = self._format_track_output(counter, current_schedule)
             all_schedules.append(tracks)
             counter+=1
