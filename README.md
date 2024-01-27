@@ -4,9 +4,10 @@ This project is designed to take a list of conference talks and their duration a
 ## How to run project
 
 To build and run the project, follow these steps:
-1. Run `make all` to install dependencies, run tests, and bring up Docker containers.
-2. Open your browser and type [http://0.0.0.0:8000/tracker](http://0.0.0.0:8000/tracker)
-3. Upload your csv file. eg: [sample csv](https://drive.google.com/file/d/1-5Af6_HEL3e4aOpvEcxVeLJk61utTmHl/view)
+1. Make sure you have docker installed
+2. Run `make all` to install dependencies, run tests, and bring up Docker containers.
+3. Open your browser and type [http://0.0.0.0:8000/tracker](http://0.0.0.0:8000/tracker)
+4. Upload your csv file. eg: [sample csv](https://drive.google.com/file/d/1-5Af6_HEL3e4aOpvEcxVeLJk61utTmHl/view)
 
 ## How to stop project
 1. To stop the Docker containers and perform cleanup, run `make down`.
