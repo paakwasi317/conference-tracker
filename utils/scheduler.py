@@ -1,16 +1,24 @@
 from collections import namedtuple
-from datetime import datetime, time
+from datetime import datetime
 import pandas as pd
 import random
 import re
 from typing import Dict, List, IO
+from pydantic import BaseModel
 
 from .logger import logger
 
-TalkInfo = namedtuple("TalkInfo", ["conference_talk", "duration"])
+TalkInfo = namedtuple("TalkInfo", ['conference_talk', 'duration'])
+TrackInfo = namedtuple("TrackInfo", ['time', 'talk'])
 
-SCHEDULE_TYPE = Dict[int, TalkInfo]
-MULTIPLE_SCHEDULE_TYPE = List[Dict[int, TalkInfo]]
+class Track(BaseModel):
+    time: str
+    talk: str
+
+
+SESSION = Dict[int, TalkInfo]
+TRACK = Dict[str, Track]
+TRACKS = List[TRACK]
 
 class SchedulingError(Exception):
   """Base class for exceptions in scheduling"""
@@ -39,7 +47,7 @@ class Scheduler:
         self.conference_data = {}
 
     @staticmethod
-    def _extract_talk_duration(row):
+    def _extract_talk_duration(row) -> dict:
         if "lightning" in row:
             return dict(conference_talk=row, duration=5)
         
@@ -52,18 +60,18 @@ class Scheduler:
         return dict(conference_talk=row, duration=0)
 
     @staticmethod
-    def _format_track_output(counter: int, schedules: SCHEDULE_TYPE) -> Dict[str, list]:
-        sessions = []
-        for time, talk_info in schedules.items():
+    def _format_track_output(counter: int, daily_sessions: SESSION) -> TRACK:
+        formated_daily_sessions = []
+        for time, talk_info in daily_sessions.items():
             hours, minutes = divmod(time, 60)
             dt_time = datetime(2024, 1, 2, hours, minutes)
             duration_mins = f"[{talk_info.duration} mins]" if talk_info.duration else ""
-            sessions.append(dict(time=f"{dt_time.strftime('%I:%M %p')}", talk=f"{talk_info.conference_talk} {duration_mins}"))
-        tracks = {f"Track {counter}": sessions}
-        return tracks
+            formated_daily_sessions.append(Track(time=f"{dt_time.strftime('%I:%M %p')}", talk=f"{talk_info.conference_talk} {duration_mins}"))
+        track = {f"Track {counter}": formated_daily_sessions}
+        return track
     
-    def _create_session(self, start_time: int, end_time: int) -> SCHEDULE_TYPE:
-        schedule = {}
+    def _create_session(self, start_time: int, end_time: int) -> SESSION:
+        session = {}
         current_time = start_time
         used_talks = set()
         while current_time < end_time:
@@ -78,24 +86,24 @@ class Scheduler:
             
             selected_talk_id = random.choice(available_talks)
             selected_talk_info = self.conference_data[selected_talk_id]
-            schedule[current_time] = TalkInfo(selected_talk_info["conference_talk"], selected_talk_info["duration"])
+            session[current_time] = TalkInfo(selected_talk_info["conference_talk"], selected_talk_info["duration"])
             used_talks.add(selected_talk_id)
             self.conference_data.pop(selected_talk_id)
             current_time += selected_talk_info["duration"]
 
-        return schedule
+        return session
     
-    def _create_morning_session(self) -> SCHEDULE_TYPE:
+    def _create_morning_session(self) -> SESSION:
         return self._create_session(self.MORNING_START_TIME, self.MORNING_END_TIME)
     
-    def _create_afternoon_session(self) -> SCHEDULE_TYPE:
+    def _create_afternoon_session(self) -> SESSION:
         return self._create_session(self.AFTERNOON_START_TIME, self.AFTERNOON_END_TIME)
     
-    def _create_lunch_session(self) -> SCHEDULE_TYPE:
-        schedule = {self.LUNCH_START_TIME: TalkInfo(self.LUNCH, self.LUNCH_END_TIME - self.LUNCH_START_TIME)}
-        return schedule
+    def _create_lunch_session(self) -> SESSION:
+        session = {self.LUNCH_START_TIME: TalkInfo(self.LUNCH, self.LUNCH_END_TIME - self.LUNCH_START_TIME)}
+        return session
     
-    def _create_networking_session(self, current_schedule: SCHEDULE_TYPE) -> SCHEDULE_TYPE:
+    def _create_networking_session(self, current_schedule: SESSION) -> SESSION:
         last_key, last_value = max(current_schedule.items())
         networking_start_time = max(last_key + last_value.duration, 16 * 60)
         session = {networking_start_time: TalkInfo(self.NETWORK_EVENT, 0)}
@@ -115,17 +123,17 @@ class Scheduler:
         result_dict = df['talk_dict'].to_dict()
         self.conference_data = result_dict
 
-    def create_multiple_schedules(self) -> MULTIPLE_SCHEDULE_TYPE:
-        all_schedules = []
+    def create_tracks(self) -> TRACKS:
+        tracks = []
         counter = 1
         while self.conference_data:
             morning_session = self._create_morning_session()
             lunch_session = self._create_lunch_session()
             afternoon_session = self._create_afternoon_session()
-            current_schedule = {**morning_session, **lunch_session, **afternoon_session}
-            networking_session = self._create_networking_session(current_schedule)
-            current_schedule.update(networking_session)
-            tracks = self._format_track_output(counter, current_schedule)
-            all_schedules.append(tracks)
+            daily_sessions = {**morning_session, **lunch_session, **afternoon_session}
+            networking_session = self._create_networking_session(daily_sessions)
+            daily_sessions.update(networking_session)
+            track = self._format_track_output(counter, daily_sessions)
+            tracks.append(track)
             counter+=1
-        return all_schedules
+        return tracks

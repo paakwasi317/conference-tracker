@@ -31,8 +31,8 @@ class TestScheduler(unittest.TestCase):
         file_byte_invalid = BytesIO(empty_csv_data)
         self.assertRaises(SchedulingError, lambda: self.scheduler.clean_data(file_byte_invalid))
 
-    def test_create_multiple_schedules_with_multiple_tracks(self):
-        '''Test case for create_multiple_schedules method with multiple tracks'''
+    def test_create_multiple_tracks(self):
+        '''Test case for multiple tracks'''
 
         self.scheduler.conference_data = {
             "1": {"conference_talk": "Talk 1", "duration": 60},
@@ -46,40 +46,40 @@ class TestScheduler(unittest.TestCase):
             "9": {"conference_talk": "Talk 9", "duration": 40},
             "10": {"conference_talk": "Talk 10", "duration": 50},
         }
-        result = self.scheduler.create_multiple_schedules()
+        result = self.scheduler.create_tracks()
         self.assertEqual(len(result), 2)
         self.assertIn("Track 1", result[0])
         self.assertIn("Track 2", result[1])
 
-    def test_create_multiple_schedules_with_one_track_more_talks(self):
-        '''Test case for create_multiple_schedules method with valid data'''
+    def test_create_one_track(self):
+        '''Test case to create one track'''
 
         self.scheduler.conference_data = {
             "1": {"conference_talk": "Talk 1", "duration": 45},
             "2": {"conference_talk": "Talk 2", "duration": 30},
             "3": {"conference_talk": "Talk 3", "duration": 60},
         }
-        result = self.scheduler.create_multiple_schedules()
+        result = self.scheduler.create_tracks()
         self.assertEqual(len(result), 1)
         self.assertIn("Track 1", result[0])
         self.assertEqual(len(result[0]["Track 1"]), 5)
 
-    def test_create_multiple_schedules_with_one_track_one_talk(self):
+    def test_create_one_track_one_talk(self):
         '''Test case for create_multiple_schedules method with valid data but one talk'''
 
         self.scheduler.conference_data = {
             "1": {"conference_talk": "Talk 1", "duration": 45}
         }
-        result = self.scheduler.create_multiple_schedules()
+        result = self.scheduler.create_tracks()
         self.assertEqual(len(result), 1)
         self.assertIn("Track 1", result[0])
         self.assertEqual(len(result[0]["Track 1"]), 3)
 
-    def test_create_multiple_schedules_with_no_data(self):
-        '''Test case for create_multiple_schedules method with valid data with no talk'''
+    def test_create_track_with_no_data(self):
+        '''Test case to create track with no data'''
 
         self.scheduler.conference_data = {}
-        result = self.scheduler.create_multiple_schedules()
+        result = self.scheduler.create_tracks()
         self.assertEqual(len(result), 0)
 
 if __name__ == "__main__":

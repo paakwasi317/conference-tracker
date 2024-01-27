@@ -17,10 +17,10 @@ class TestTrackerAPI(unittest.TestCase):
 
     def test_create_upload_file_valid_csv(self):
         '''Assuming you have a valid CSV content in bytes'''
-        
+
         valid_csv_content = b"talks\nTalk 1 \nTalk 2 78mins"
 
-        with patch.object(Scheduler, 'create_multiple_schedules') as mock_create_schedules:
+        with patch.object(Scheduler, 'create_tracks') as mock_create_schedules:
             mock_create_schedules.return_value = [{'Track 1': [{'time': '09:00 AM', 'talk': 'Talk 1'}]}]
 
             response = self.client.post("/tracker/uploadfile", files={"file": ("test.csv", valid_csv_content)})

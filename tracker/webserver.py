@@ -12,22 +12,22 @@ tracker_api = APIRouter(prefix="/tracker")
 templates = Jinja2Templates(directory="templates")
 
 @tracker_api.post("/uploadfile")
-async def create_upload_file(file: Annotated[bytes, File()]):
+async def upload_file(file: Annotated[bytes, File()]):
     file_byte = io.BytesIO(file)
     scheduler= Scheduler()
     try:
         scheduler.clean_data(file_byte)
-        multiple_schedules = scheduler.create_multiple_schedules()
+        tracks = scheduler.create_tracks()
     except SchedulingError as e:
         logger.error(f"An error occurred: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         raise HTTPException(status_code=500, detail="Server error. Please Contact support")
-    return {"schedules": multiple_schedules}
+    return {"schedules": tracks}
 
 @tracker_api.get("", response_class=HTMLResponse)
-async def read_item(request: Request):
+async def tracker_view(request: Request):
     return templates.TemplateResponse(
-        request=request, name="item.html", context={}
+        request=request, name="tracker.html", context={}
     )
