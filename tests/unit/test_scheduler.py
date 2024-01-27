@@ -1,6 +1,6 @@
 import unittest
 from io import BytesIO
-from utils.scheduler import Scheduler, SchedulingError
+from utils.scheduler import Scheduler, SchedulingError, TalkInfo
 
 class TestScheduler(unittest.TestCase):
     def setUp(self):
@@ -12,9 +12,10 @@ class TestScheduler(unittest.TestCase):
         valid_csv_data = b"Talk 1 45 mins\nTalk 2 lightning\n"
         file_byte_valid = BytesIO(valid_csv_data)
         self.scheduler.clean_data(file_byte_valid)
+        print(self.scheduler.conference_data)
         self.assertEqual(len(self.scheduler.conference_data), 2)
-        self.assertEqual(self.scheduler.conference_data[0], {'conference_talk': 'Talk 1', 'duration': 45})
-        self.assertEqual(self.scheduler.conference_data[1], {'conference_talk': 'Talk 2 lightning', 'duration': 5})
+        self.assertEqual(self.scheduler.conference_data[0], TalkInfo(conference_talk='Talk 1', duration=45))
+        self.assertEqual(self.scheduler.conference_data[1], TalkInfo(conference_talk='Talk 2 lightning', duration=5))
 
     def test_with_invalid_csv(self):
         '''Test case for clean_data method with invalid CSV(comma introduced makes it invalid). 
@@ -35,16 +36,16 @@ class TestScheduler(unittest.TestCase):
         '''Test case for multiple tracks'''
 
         self.scheduler.conference_data = {
-            "1": {"conference_talk": "Talk 1", "duration": 60},
-            "2": {"conference_talk": "Talk 2", "duration": 45},
-            "3": {"conference_talk": "Talk 3", "duration": 30},
-            "4": {"conference_talk": "Talk 4", "duration": 60},
-            "5": {"conference_talk": "Talk 5", "duration": 45},
-            "6": {"conference_talk": "Talk 6", "duration": 30},
-            "7": {"conference_talk": "Talk 7", "duration": 90},
-            "8": {"conference_talk": "Talk 8", "duration": 60},
-            "9": {"conference_talk": "Talk 9", "duration": 40},
-            "10": {"conference_talk": "Talk 10", "duration": 50},
+            "1": TalkInfo(conference_talk="Talk 1", duration=60),
+            "2": TalkInfo(conference_talk="Talk 2", duration=45),
+            "3": TalkInfo(conference_talk="Talk 3", duration=30),
+            "4": TalkInfo(conference_talk="Talk 4", duration=60),
+            "5": TalkInfo(conference_talk="Talk 5", duration=45),
+            "6": TalkInfo(conference_talk="Talk 6", duration=30),
+            "7": TalkInfo(conference_talk="Talk 7", duration=90),
+            "8": TalkInfo(conference_talk="Talk 8", duration=60),
+            "9": TalkInfo(conference_talk="Talk 9", duration=40),
+            "10": TalkInfo(conference_talk="Talk 10",duration=5),
         }
         result = self.scheduler.create_tracks()
         self.assertEqual(len(result), 2)
@@ -55,9 +56,9 @@ class TestScheduler(unittest.TestCase):
         '''Test case to create one track'''
 
         self.scheduler.conference_data = {
-            "1": {"conference_talk": "Talk 1", "duration": 45},
-            "2": {"conference_talk": "Talk 2", "duration": 30},
-            "3": {"conference_talk": "Talk 3", "duration": 60},
+            "1": TalkInfo(conference_talk="Talk 1", duration=45),
+            "2": TalkInfo(conference_talk="Talk 2", duration=30),
+            "3": TalkInfo(conference_talk="Talk 3", duration=60),
         }
         result = self.scheduler.create_tracks()
         self.assertEqual(len(result), 1)
@@ -68,7 +69,7 @@ class TestScheduler(unittest.TestCase):
         '''Test case for create_multiple_schedules method with valid data but one talk'''
 
         self.scheduler.conference_data = {
-            "1": {"conference_talk": "Talk 1", "duration": 45}
+            "1": TalkInfo(conference_talk="Talk 1", duration=45)
         }
         result = self.scheduler.create_tracks()
         self.assertEqual(len(result), 1)
